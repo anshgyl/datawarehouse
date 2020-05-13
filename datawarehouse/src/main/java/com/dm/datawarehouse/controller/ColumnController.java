@@ -73,8 +73,9 @@ public class ColumnController
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response setColumns(String selectedCols)
 	{
-		System.out.println("Hello");
 		JSONArray jArray = (JSONArray) new JSONTokener(selectedCols).nextValue();
+		String whereCondition = null;
+		String groupByCondition = null;
 		
 		DTC dtc;
 		LinkedHashSet<String> tables = new LinkedHashSet<String>();
@@ -85,16 +86,38 @@ public class ColumnController
 		{
 			JSONObject jObject = jArray.getJSONObject(i);
 			//dtc = new DTC(jObject.getString("dbname"), jObject.getString("tbname"), jObject.getString("clname"));
+			if(jObject.getString("dbname") == "WHERE" || jObject.getString("clname").equals("WHERE"))
+			{
+				whereCondition = jObject.getString("tbname");
+				System.out.println("\n\nWHERE " + whereCondition);
+			}
 			
-			tables.add(jObject.getString("tbname"));
-			columns.add(jObject.getString("tbname") + "." + jObject.getString("clname"));
-			dbPlusTables.add(jObject.getString("dbname") + "/" + jObject.getString("tbname"));
+			else if(jObject.getString("dbname") == "GROUPBY" || jObject.getString("clname").equals("GROUPBY"))
+			{
+				groupByCondition = jObject.getString("tbname");
+				System.out.println("\n\nGROUP BY " + groupByCondition);
+			}
+			
+			else
+			{
+				tables.add(jObject.getString("tbname"));
+				//columns.add(jObject.getString("tbname") + "." + jObject.getString("clname"));
+				columns.add(jObject.getString("tbcl"));
+				dbPlusTables.add(jObject.getString("dbname") + "/" + jObject.getString("tbname"));
+			}
 
 		}
+		Query q = new  Query();
+		if (whereCondition != null)
+			q.getWhere().add(whereCondition);
+		
+		if (groupByCondition != null)
+			q.setGroupBy(groupByCondition);
+		
 		dtc = new DTC(jArray.getJSONObject(0).getString("dbname"), tables, columns, dbPlusTables);
 		
 		GenericEntity<List<String[]>> output;
-		output  = new GenericEntity<List<String[]>>(new QueryDAO().executeQuery(new Query(jArray.getJSONObject(0).getString("dbname"), new QueryService().generateQuery(dtc)))) { };
+		output  = new GenericEntity<List<String[]>>(new QueryDAO().executeQuery(new Query(jArray.getJSONObject(0).getString("dbname"), new QueryService().generateQuery(dtc,q)))) { };
 		return Response.ok(output).build();
 		
 	    //return Response.status(Response.Status.OK).entity("Salam").build();

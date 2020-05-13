@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 
 import com.dm.datawarehouse.bean.Node;
+import com.dm.datawarehouse.bean.Query;
 import com.dm.datawarehouse.connection.Conn;
 import com.dm.datawarehouse.dao.JoinDAO;
 
@@ -59,12 +60,14 @@ public class JoinService
 	}
 	
 			
-		public static String returnJoin(String db, LinkedHashSet<String> tbnames)
+		public static Query returnJoin(String db, LinkedHashSet<String> tbnames,Query generate)
 		{  
 			adj = new HashMap<String, ArrayList<Node> >();
 			JoinDAO joinDAO= new JoinDAO();
 			database = db;
 			String join = "";
+			
+			@SuppressWarnings("unused")
 			String from = "";
 			tables = new ArrayList<String>();
 			try
@@ -89,17 +92,21 @@ public class JoinService
 					Node x = j.next();
 					tbnames.add(x.myName);
 					tbnames.add(x.referredName);
+//					generate.getFrom().add(x.myName);
+//					generate.getFrom().add(x.referredName);
+
 				}
 				
-				from = from + " FROM ";
-				
-				i = tbnames.iterator();
-				while (i.hasNext())
-				{
-					from = from + i.next();
-					if (i.hasNext())
-						from = from + ", ";
-				}
+//				from = from + " FROM ";
+				generate.setFrom(tbnames);
+//				
+//				i = tbnames.iterator();
+//				while (i.hasNext())
+//				{
+//					from = from + i.next();
+//					if (i.hasNext())
+//						from = from + ", ";
+//				}
 				
 				//getPath(new Node("", "", "employee", ""), new Node("", "", "project", ""));
 				j = GlobalPathList.iterator();
@@ -112,20 +119,23 @@ public class JoinService
 				}
 				System.out.println(join);
 				
-				if(!join.equals(""))
-				{
-					join = from + " WHERE " + join;
+				if (!join.equals("")) {
+					generate.getWhere().add(join);
 				}
-				else
-				{
-					join = from;
-				}
+//				if(!join.equals(""))
+//				{
+//					join = from + " WHERE " + join;
+//				}
+//				else
+//				{
+//					join = from;
+//				}
 				System.out.println(join);
 				con.close();
 			}
 			catch(Exception e){}
 			GlobalPathList = new ArrayList<Node>();
-			return join;
+			return generate;
 	
 	}
 }

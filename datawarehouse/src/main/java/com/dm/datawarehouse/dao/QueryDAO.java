@@ -9,20 +9,23 @@ import java.util.List;
 import com.dm.datawarehouse.bean.Query;
 import com.dm.datawarehouse.connection.Conn;
 import com.dm.datawarehouse.service.AnonymizerLocal;
+import com.dm.datawarehouse.service.getArrayListData;
 
 public class QueryDAO
 {
 	Connection con;
 
-	public  ResultSet rs;
-	
-	public  ResultSet getRs() {
+	public ResultSet rs;
+
+	public ResultSet getRs()
+	{
 		return rs;
 	}
 
 	public List<String[]> executeQuery(Query q)
 	{
 		Statement st;
+		List<String[]> table2 = new ArrayList<String[]>();
 		List<String[]> table = new ArrayList<>();
 		try
 		{
@@ -32,33 +35,44 @@ public class QueryDAO
 			rs = st.executeQuery(q.getQueryString());
 
 			int nCol = rs.getMetaData().getColumnCount();
-			while(rs.next())
+			while (rs.next())
 			{
-			    String[] row = new String[nCol];
-			    for(int iCol = 1; iCol <= nCol; iCol++ ){
-			            Object obj = rs.getObject( iCol );
-			            row[iCol-1] = (obj == null) ?null:obj.toString();
-			    }
-			    table.add(row);
+				String[] row = new String[nCol];
+				for (int iCol = 1; iCol <= nCol; iCol++)
+				{
+					Object obj = rs.getObject(iCol);
+					row[iCol - 1] = (obj == null) ? null : obj.toString();
+				}
+				table.add(row);
 			}
 
 			// print result
-			for( String[] row: table ){
-			    for( String s: row ){
-			        System.out.print( " " + s );
-			    }
-			    System.out.println();
+			for (String[] row : table)
+			{
+				for (String s : row)
+				{
+					System.out.print(" " + s);
+				}
+				System.out.println();
 			}
 			rs = st.executeQuery(q.getQueryString());
 
-			//privacy
-			AnonymizerLocal a= new AnonymizerLocal();
-			a.start(rs);
-		} 
-		catch (Exception e)
+			// privacy
+			AnonymizerLocal a = new AnonymizerLocal();
+			table2 = a.start(rs);
+			
+			rs = st.executeQuery(q.getQueryString());
+			table = new getArrayListData().getArrayListDataSet(rs);
+			
+			if (table2 == null)
+			{
+				table2 = table;
+			}
+
+		} catch (Exception e)
 		{
 			// TODO: handle exception
 		}
-		return table;
+		return table2;
 	}
 }
